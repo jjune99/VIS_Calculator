@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>VIS Score Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F0F4F8;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #1565C0;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .drug-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .drug-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .drug-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .drug-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .drug-unit {
+      font-size: 10px;
+      color: #999;
+      font-weight: 400;
+    }
+
+    .multiplier {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      background: #E3F2FD;
+      color: #1565C0;
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 3px;
+    }
+
+    .multiplier.amber {
+      background: #FFF3E0;
+      color: #E65100;
+    }
+
+    input[type="number"] {
+      border: 1.5px solid #E0E0E0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 16px;
+      color: #222;
+      background: #FAFAFA;
+      width: 100%;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: #1565C0;
+      background: white;
+    }
+
+    .vaso-card {
+      background: #FFF8F0;
+      border: 1.5px solid #FFD180;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .vaso-card .card-title {
+      color: #E65100;
+    }
+
+    .vaso-card input[type="number"] {
+      border-color: #FFB74D;
+      background: white;
+    }
+
+    .vaso-card input[type="number"]:focus {
+      border-color: #E65100;
+    }
+
+    .vaso-converted {
+      font-size: 11px;
+      color: #E65100;
+      margin-top: 4px;
+      min-height: 16px;
+      font-weight: 500;
+    }
+
+    .btn-calc {
+      width: 100%;
+      background: #1565C0;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-calc:active {
+      background: #0D47A1;
+      transform: scale(0.98);
+    }
+
+    .btn-reset {
+      width: 100%;
+      background: white;
+      color: #888;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+
+    .btn-reset:active {
+      background: #F5F5F5;
+    }
+
+    .result-card {
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .result-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+
+    .result-score {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      line-height: 1;
+    }
+
+    .severity-badge {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .sev-low   { background: #E8F5E9; color: #2E7D32; }
+    .sev-mod   { background: #FFF3E0; color: #E65100; }
+    .sev-high  { background: #FBE9E7; color: #BF360C; }
+    .sev-vhigh { background: #FFEBEE; color: #B71C1C; }
+
+    .res-low   { background: #E8F5E9; color: #1B5E20; }
+    .res-mod   { background: #FFF3E0; color: #BF360C; }
+    .res-high  { background: #FBE9E7; color: #B71C1C; }
+    .res-vhigh { background: #FFEBEE; color: #7F0000; }
+
+    .breakdown {
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 12px;
+    }
+
+    .bk-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .bk-row:last-child {
+      border-bottom: none;
+      font-weight: 700;
+      font-size: 14px;
+      padding-top: 8px;
+    }
+
+    .bk-name { opacity: 0.7; }
+    .bk-val  { font-weight: 600; }
+
+    .formula {
+      background: white;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 11px;
+      color: #888;
+      line-height: 1.7;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <h1>VIS Score Calculator</h1>
+      <p>Vasoactive Inotropic Score — 각 약물 용량을 입력하세요</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">혈압 상승제 / 강심제</p>
+      <div class="drug-grid">
+        <div class="drug-item">
+          <span class="drug-label">Dopamine <span class="drug-unit">μg/kg/min</span></span>
+          <input type="number" id="dopamine" min="0" step="0.1" placeholder="0.0" inputmode="decimal">
+        </div>
+        <div class="drug-item">
+          <span class="drug-label">Dobutamine <span class="drug-unit">μg/kg/min</span></span>
+          <input type="number" id="dobutamine" min="0" step="0.1" placeholder="0.0" inputmode="decimal">
+        </div>
+        <div class="drug-item">
+          <span class="drug-label">Milrinone <span class="multiplier">×10</span><br><span class="drug-unit">μg/kg/min</span></span>
+          <input type="number" id="milrinone" min="0" step="0.01" placeholder="0.0" inputmode="decimal">
+        </div>
+        <div class="drug-item">
+          <span class="drug-label">Epinephrine <span class="multiplier">×100</span><br><span class="drug-unit">μg/kg/min</span></span>
+          <input type="number" id="epinephrine" min="0" step="0.001" placeholder="0.0" inputmode="decimal">
+        </div>
+        <div class="drug-item full">
+          <span class="drug-label">Norepinephrine <span class="multiplier">×100</span><br><span class="drug-unit">μg/kg/min</span></span>
+          <input type="number" id="norepinephrine" min="0" step="0.001" placeholder="0.0" inputmode="decimal">
+        </div>
+      </div>
+    </div>
+
+    <div class="vaso-card">
+      <p class="card-title">Vasopressin <span class="multiplier amber">×10,000</span></p>
+      <div class="drug-grid">
+        <div class="drug-item">
+          <span class="drug-label">Vasopressin<br><span class="drug-unit">U/min 단위 입력</span></span>
+          <input type="number" id="vasopressin_umin" min="0" step="0.0001" placeholder="0.0" inputmode="decimal" oninput="updateVaso()">
+          <span class="vaso-converted" id="vaso_converted"></span>
+        </div>
+        <div class="drug-item">
+          <span class="drug-label">체중<br><span class="drug-unit">kg</span></span>
+          <input type="number" id="weight" min="0" step="0.1" placeholder="예) 70" inputmode="decimal" oninput="updateVaso()">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-calc" onclick="calculate()">VIS Score 계산</button>
+    <button class="btn-reset" onclick="resetAll()">초기화</button>
+
+    <div class="result-card" id="resultCard">
+      <p class="result-label">VIS Score</p>
+      <p class="result-score" id="scoreVal">—</p>
+      <div id="severityBadge"></div>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+    <div class="formula">
+      VIS = Dopamine + Dobutamine + 10 × Milrinone + 100 × Epinephrine + 100 × Norepinephrine + 10,000 × Vasopressin (U/kg/min)
+    </div>
+
+  </div>
+
+  <script>
+    function val(id) {
+      return parseFloat(document.getElementById(id).value) || 0;
+    }
+
+    function updateVaso() {
+      const umin = val('vasopressin_umin');
+      const wt   = val('weight');
+      const el   = document.getElementById('vaso_converted');
+      if (umin > 0 && wt > 0) {
+        el.textContent = '→ ' + (umin / wt).toFixed(6) + ' U/kg/min';
+      } else if (umin > 0) {
+        el.textContent = '체중을 입력해 주세요';
+      } else {
+        el.textContent = '';
+      }
+    }
+
+    function calculate() {
+      const dopa   = val('dopamine');
+      const dobu   = val('dobutamine');
+      const milr   = val('milrinone');
+      const epi    = val('epinephrine');
+      const norepi = val('norepinephrine');
+      const umin   = val('vasopressin_umin');
+      const wt     = val('weight');
+
+      if (umin > 0 && wt === 0) {
+        document.getElementById('vaso_converted').textContent = '체중을 입력해 주세요';
+        document.getElementById('weight').focus();
+        return;
+      }
+
+      const vasoKgMin = wt > 0 ? umin / wt : 0;
+      const vis = dopa + dobu + (10 * milr) + (100 * epi) + (100 * norepi) + (10000 * vasoKgMin);
+
+      let sevClass, resClass, sevText;
+      if      (vis < 10)  { sevClass = 'sev-low';   resClass = 'res-low';   sevText = 'Low  (VIS < 10)'; }
+      else if (vis < 20)  { sevClass = 'sev-mod';   resClass = 'res-mod';   sevText = 'Moderate  (VIS 10–19)'; }
+      else if (vis < 40)  { sevClass = 'sev-high';  resClass = 'res-high';  sevText = 'High  (VIS 20–39)'; }
+      else                { sevClass = 'sev-vhigh'; resClass = 'res-vhigh'; sevText = 'Very High  (VIS ≥ 40)'; }
+
+      const card = document.getElementById('resultCard');
+      card.className = 'result-card ' + resClass;
+      card.style.display = 'block';
+
+      document.getElementById('scoreVal').textContent = vis.toFixed(2);
+      document.getElementById('severityBadge').innerHTML =
+        '<span class="severity-badge ' + sevClass + '">' + sevText + '</span>';
+
+      const vasoContrib = 10000 * vasoKgMin;
+      const rows = [
+        ['Dopamine',            dopa.toFixed(2)],
+        ['Dobutamine',          dobu.toFixed(2)],
+        ['Milrinone ×10',       (10 * milr).toFixed(2)],
+        ['Epinephrine ×100',    (100 * epi).toFixed(2)],
+        ['Norepinephrine ×100', (100 * norepi).toFixed(2)],
+        ['Vasopressin ×10,000', vasoContrib.toFixed(2)],
+        ['Total VIS',           vis.toFixed(2)],
+      ];
+      document.getElementById('breakdown').innerHTML =
+        rows.map(r =>
+          '<div class="bk-row"><span class="bk-name">' + r[0] + '</span><span class="bk-val">' + r[1] + '</span></div>'
+        ).join('');
+
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function resetAll() {
+      ['dopamine','dobutamine','milrinone','epinephrine','norepinephrine','vasopressin_umin','weight']
+        .forEach(id => document.getElementById(id).value = '');
+      document.getElementById('vaso_converted').textContent = '';
+      const card = document.getElementById('resultCard');
+      card.style.display = 'none';
+      card.className = 'result-card';
+    }
+  </script>
+</body>
+</html>
